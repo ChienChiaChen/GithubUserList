@@ -6,9 +6,17 @@ import com.example.githubuserlist.TOKEN
 import com.example.githubuserlist.data.model.GitHubUser
 import com.example.githubuserlist.data.repository.GitHubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,14 +31,46 @@ class GitHubUsersViewModel @Inject constructor(
     private val _users = MutableStateFlow<List<GitHubUser>>(emptyList())
     val users: StateFlow<List<GitHubUser>> = _users.asStateFlow()
     
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
     private var currentPage = 0
     private var isLoading = false
     private var hasMoreData = true
-    
+    private var searchJob: Job? = null
+
     init {
         loadUsers()
+        setupSearchDebounce()
     }
     
+    private fun setupSearchDebounce() {
+        _searchQuery
+            .debounce(500) // Wait 500ms after user stops typing
+            .distinctUntilChanged() // Only emit if value changed
+            .filter { it.isNotBlank() } // Only search non-empty queries
+            .onEach { query ->
+                // Show loading state
+                _uiState.value = GitHubUsersUiState.Loading
+            }
+            .flatMapLatest { query ->
+                // Perform search
+                kotlinx.coroutines.flow.flow {
+                    try {
+                        val searchResponse = repository.searchUsers(query = query, token = TOKEN)
+                        emit(searchResponse.items)
+                    } catch (e: Exception) {
+                        throw e
+                    }
+                }
+            }
+            .onEach { users ->
+                _users.value = users
+                _uiState.value = GitHubUsersUiState.Success(users)
+            }
+            .launchIn(viewModelScope)
+    }
+
     fun loadUsers(refresh: Boolean = false) {
         if (isLoading || (!refresh && !hasMoreData)) return
         
@@ -41,7 +81,7 @@ class GitHubUsersViewModel @Inject constructor(
                 
                 val since = if (refresh) null else currentPage
                 val newUsers = repository.getUsers(since = since, token = TOKEN)
-
+                
                 if (refresh) {
                     _users.value = newUsers
                     currentPage = newUsers.lastOrNull()?.id ?: 0
@@ -61,23 +101,12 @@ class GitHubUsersViewModel @Inject constructor(
         }
     }
     
-    fun searchUsers(query: String) {
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        
+        // If query is empty, load all users
         if (query.isBlank()) {
             loadUsers(refresh = true)
-            return
-        }
-        
-        viewModelScope.launch {
-            try {
-                _uiState.value = GitHubUsersUiState.Loading
-
-                val searchResponse = repository.searchUsers(query = query, token = TOKEN)
-                _users.value = searchResponse.items
-                _uiState.value = GitHubUsersUiState.Success(searchResponse.items)
-                
-            } catch (e: Exception) {
-                _uiState.value = GitHubUsersUiState.Error(e.message ?: "Search failed")
-            }
         }
     }
 }
