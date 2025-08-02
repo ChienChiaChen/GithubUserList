@@ -5,12 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.githubuserlist.ui.screens.UserListScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.githubuserlist.navigation.AppNavigation
 import com.example.githubuserlist.ui.theme.GithubUserListTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,14 +22,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GithubUserListTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    UserListScreen(
-                        onUserClick = { username ->
-//                             TODO: Navigate to user detail screen
-                            println("Clicked on user: $username")
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    AppNavigation(navController = navController)
                 }
             }
         }
@@ -37,12 +36,14 @@ class MainActivity : ComponentActivity() {
 
 @Preview(showBackground = true)
 @Composable
-fun UserListScreenPreview() {
+fun AppPreview() {
     GithubUserListTheme {
-        UserListScreen(
-            onUserClick = { username ->
-                println("Clicked on user: $username")
-            }
-        )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            val navController = rememberNavController()
+            AppNavigation(navController = navController)
+        }
     }
 }

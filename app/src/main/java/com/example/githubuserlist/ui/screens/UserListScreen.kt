@@ -28,59 +28,64 @@ fun UserListScreen(
     val users by viewModel.users.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     
-    Column(
+    Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { query ->
-                searchQuery = query
-                viewModel.searchUsers(query)
-            },
-            label = { Text("Search GitHub users") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            singleLine = true
-        )
-        
-        // User List
-        when (uiState) {
-            is GitHubUsersUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { query ->
+                    searchQuery = query
+                    viewModel.searchUsers(query)
+                },
+                label = { Text("Search GitHub users") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true
+            )
             
-            is GitHubUsersUiState.Success -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(users) { user ->
-                        UserItem(
-                            user = user,
-                            onClick = {  }
-                        )
+            // User List
+            when (uiState) {
+                is GitHubUsersUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
-            }
-            
-            is GitHubUsersUiState.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = (uiState as GitHubUsersUiState.Error).message,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                
+                is GitHubUsersUiState.Success -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(users) { user ->
+                            UserItem(
+                                user = user,
+                                onClick = { onUserClick(user.login) }
+                            )
+                        }
+                    }
+                }
+                
+                is GitHubUsersUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = (uiState as GitHubUsersUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }

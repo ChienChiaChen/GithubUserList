@@ -9,4 +9,3 @@ class GitHubUserListApplication : Application()
 
 
 
-const val TOKEN = "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"
