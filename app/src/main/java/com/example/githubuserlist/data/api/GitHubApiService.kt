@@ -2,6 +2,8 @@ package com.example.githubuserlist.data.api
 
 import com.example.githubuserlist.data.model.GitHubUser
 import com.example.githubuserlist.data.model.GitHubRepositoryRes
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
@@ -69,8 +71,11 @@ interface GitHubApiService {
     ): List<GitHubRepositoryRes>
 }
 
+@Serializable
 data class SearchResponse(
+    @SerialName("total_count")
     val totalCount: Int,
+    @SerialName("incomplete_results")
     val incompleteResults: Boolean,
     val items: List<GitHubUser>
 ) 

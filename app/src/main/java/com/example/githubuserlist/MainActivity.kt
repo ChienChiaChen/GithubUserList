@@ -7,12 +7,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.githubuserlist.ui.screens.UserListScreen
 import com.example.githubuserlist.ui.theme.GithubUserListTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,8 +22,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             GithubUserListTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    UserListScreen(
+                        onUserClick = { username ->
+//                             TODO: Navigate to user detail screen
+                            println("Clicked on user: $username")
+                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -30,18 +35,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun UserListScreenPreview() {
     GithubUserListTheme {
-        Greeting("Android")
+        UserListScreen(
+            onUserClick = { username ->
+                println("Clicked on user: $username")
+            }
+        )
     }
 }
