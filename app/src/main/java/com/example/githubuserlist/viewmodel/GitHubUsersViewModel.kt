@@ -7,7 +7,6 @@ import com.example.githubuserlist.data.model.GitHubUser
 import com.example.githubuserlist.data.repository.GitHubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,10 +33,11 @@ class GitHubUsersViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     
-    private var currentPage = 0
+    // Pagination state
+    private var lastUserId: Int? = null
     private var isLoading = false
     private var hasMoreData = true
-    private var searchJob: Job? = null
+    private var isSearchMode = false
 
     init {
         loadUsers()
@@ -50,7 +50,10 @@ class GitHubUsersViewModel @Inject constructor(
             .distinctUntilChanged() // Only emit if value changed
             .filter { it.isNotBlank() } // Only search non-empty queries
             .onEach { query ->
-                // Show loading state
+                // Reset pagination state for search
+                isSearchMode = true
+                hasMoreData = true
+                lastUserId = null
                 _uiState.value = GitHubUsersUiState.Loading
             }
             .flatMapLatest { query ->
@@ -77,20 +80,27 @@ class GitHubUsersViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 isLoading = true
-                _uiState.value = GitHubUsersUiState.Loading
                 
-                val since = if (refresh) null else currentPage
+                if (refresh) {
+                    _uiState.value = GitHubUsersUiState.Loading
+                    lastUserId = null
+                    hasMoreData = true
+                    isSearchMode = false
+                }
+                
+                val since = if (refresh) null else lastUserId
                 val newUsers = repository.getUsers(since = since, token = TOKEN)
                 
                 if (refresh) {
                     _users.value = newUsers
-                    currentPage = newUsers.lastOrNull()?.id ?: 0
                 } else {
                     _users.value = _users.value + newUsers
-                    currentPage = newUsers.lastOrNull()?.id ?: currentPage
                 }
                 
+                // Update pagination state
+                lastUserId = newUsers.lastOrNull()?.id
                 hasMoreData = newUsers.isNotEmpty()
+                
                 _uiState.value = GitHubUsersUiState.Success(_users.value)
                 
             } catch (e: Exception) {
@@ -101,13 +111,25 @@ class GitHubUsersViewModel @Inject constructor(
         }
     }
     
+    fun loadMore() {
+        if (!isSearchMode) {
+            loadUsers(refresh = false)
+        }
+        // Note: Search API doesn't support pagination in this implementation
+    }
+    
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
         
         // If query is empty, load all users
         if (query.isBlank()) {
+            isSearchMode = false
             loadUsers(refresh = true)
         }
+    }
+    
+    fun canLoadMore(): Boolean {
+        return !isLoading && hasMoreData && !isSearchMode
     }
 }
 

@@ -3,10 +3,12 @@ package com.example.githubuserlist.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +29,22 @@ fun UserListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val users by viewModel.users.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    
+    // LazyListState for load more functionality
+    val lazyListState = rememberLazyListState()
+    
+    // Load more when reaching the end
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
+            .collect { visibleItems ->
+                val lastVisibleItem = visibleItems.lastOrNull()
+                if (lastVisibleItem != null && 
+                    lastVisibleItem.index >= users.size - 3 && 
+                    viewModel.canLoadMore()) {
+                    viewModel.loadMore()
+                }
+            }
+    }
     
     Scaffold(
         modifier = modifier
@@ -65,6 +83,7 @@ fun UserListScreen(
                 
                 is GitHubUsersUiState.Success -> {
                     LazyColumn(
+                        state = lazyListState,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(users) { user ->
@@ -72,6 +91,22 @@ fun UserListScreen(
                                 user = user,
                                 onClick = { onUserClick(user.login) }
                             )
+                        }
+                        
+                        // Loading indicator at the bottom when loading more
+                        if (viewModel.canLoadMore()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
