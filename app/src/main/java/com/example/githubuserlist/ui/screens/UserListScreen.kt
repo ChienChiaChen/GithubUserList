@@ -28,24 +28,24 @@ fun UserListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val users by viewModel.users.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
-    
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
     // LazyListState for load more functionality
     val lazyListState = rememberLazyListState()
-    
+
     // Load more when reaching the end
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
             .collect { visibleItems ->
                 val lastVisibleItem = visibleItems.lastOrNull()
-                if (lastVisibleItem != null && 
-                    lastVisibleItem.index >= users.size - 3 && 
+                if (lastVisibleItem != null &&
+                    lastVisibleItem.index >= users.size - 3 &&
                     viewModel.canLoadMore()) {
                     viewModel.loadMore()
                 }
             }
     }
-    
+
     Scaffold(
         modifier = modifier
     ) { paddingValues ->
@@ -55,21 +55,20 @@ fun UserListScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-                    // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { query ->
-                searchQuery = query
-                viewModel.updateSearchQuery(query)
-            },
-            label = { Text("Search GitHub users") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            singleLine = true
-        )
-            
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { query ->
+                    viewModel.updateSearchQuery(query)
+                },
+                label = { Text("Search GitHub users") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                singleLine = true
+            )
+
             // User List
             when (uiState) {
                 is GitHubUsersUiState.Loading -> {
@@ -80,7 +79,7 @@ fun UserListScreen(
                         CircularProgressIndicator()
                     }
                 }
-                
+
                 is GitHubUsersUiState.Success -> {
                     LazyColumn(
                         state = lazyListState,
@@ -92,7 +91,7 @@ fun UserListScreen(
                                 onClick = { onUserClick(user.login) }
                             )
                         }
-                        
+
                         // Loading indicator at the bottom when loading more
                         if (viewModel.canLoadMore()) {
                             item {
@@ -110,7 +109,7 @@ fun UserListScreen(
                         }
                     }
                 }
-                
+
                 is GitHubUsersUiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -152,7 +151,7 @@ fun UserItem(
                     .size(50.dp)
                     .padding(end = 16.dp)
             )
-            
+
             // User Name
             Text(
                 text = user.login,
