@@ -2,7 +2,7 @@ package com.example.githubuserlist.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.githubuserlist.TOKEN
+import com.example.githubuserlist.Constants.TOKEN
 import com.example.githubuserlist.data.model.GitHubUser
 import com.example.githubuserlist.data.repository.GitHubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -22,6 +22,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.githubuserlist.data.model.GitHubRepositoryRes
 import com.example.githubuserlist.data.model.GitHubUser
+import com.example.githubuserlist.ui.components.ErrorView
+import com.example.githubuserlist.ui.components.LoadingSpinner
+import com.example.githubuserlist.util.formatCount
 import com.example.githubuserlist.viewmodel.UserRepoUiState
 import com.example.githubuserlist.viewmodel.UserRepoViewModel
 
@@ -56,14 +59,9 @@ fun UserRepoScreen(
     ) { paddingValues ->
         when (uiState) {
             is UserRepoUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                LoadingSpinner(
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
             
             is UserRepoUiState.Success -> {
@@ -96,17 +94,10 @@ fun UserRepoScreen(
             }
             
             is UserRepoUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = (uiState as UserRepoUiState.Error).message,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                ErrorView(
+                    message = (uiState as UserRepoUiState.Error).message,
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
         }
     }
@@ -268,7 +259,7 @@ fun RepoItem(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = repo.stargazersCount.toString(),
+                    text = repo.stargazersCount.formatCount(),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

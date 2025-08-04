@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.githubuserlist.Constants
 import com.example.githubuserlist.ui.screens.UserListScreen
 import com.example.githubuserlist.ui.screens.UserRepoScreen
 
@@ -27,7 +28,7 @@ fun AppNavigation(
             route = Screen.UserRepo.route,
             arguments = Screen.UserRepo.arguments
         ) { backStackEntry ->
-            val username = backStackEntry.arguments?.getString("username") ?: ""
+            val username = backStackEntry.arguments?.getString(Constants.USERNAME_ARG) ?: ""
             UserRepoScreen(
                 username = username,
                 onBackClick = {
