@@ -2,7 +2,7 @@ package com.example.githubuserlist
 
 object Constants {
     const val BASE_URL = "https://api.github.com/"
-    const val TOKEN = "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"
+    val TOKEN: String = BuildConfig.GITHUB_TOKEN
     
     // Navigation
     const val USERNAME_ARG = "username"
